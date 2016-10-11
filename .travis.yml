@@ -3,10 +3,11 @@ addons:
     debug: true
     paths:
     - libs.zip
-    - build.zip 
+    - build.zip
     - testbuild.zip
-    target_paths: 91fd4c9b-f77c-4616-a0ed-d93a01aad76b
-
+    target_paths: 98ce86fe-07e4-42ad-99f9-14f93a2e56ce
+after_success:
+- ./df-build.sh
 before_install:
 - sed -i.bak -e 's|https://nexus.codehaus.org/snapshots/|https://oss.sonatype.org/content/repositories/codehaus-snapshots/|g'
   $HOME/.m2/settings.xml
@@ -20,9 +21,8 @@ before_install:
   bash
 - cd $DFB_PROJECT_DIR
 - export JAVA_TOOL_OPTIONS=-javaagent:$DFB_PROJECT_DIR/jacocoagent.jar=destfile=$DFB_PROJECT_DIR/jacoco.exec
-- travis_wait 60 mvn test -Dmaven.clover.skip=true
-  -Dmaven.javadoc.skip=true -Drat.skip=true -Drat.ignoreErrors=true test-compile -Dgpg.skip=true
-
+- travis_wait 60 mvn test -Dmaven.clover.skip=true -Dmaven.javadoc.skip=true -Drat.skip=true
+  -Drat.ignoreErrors=true test-compile -Dgpg.skip=true
 - cd ${DFB_PROJECT_DIR}
 - env > env.file
 - echo " ----- Debug info for jacoco and env data -----"
@@ -32,7 +32,12 @@ before_install:
 - 'echo "Jacoco cov: "'
 - find . -name '*.exec'
 - echo " ----------------------------------------------"
-
+- sed -i.bak -e 's|https://nexus.codehaus.org/snapshots/|https://oss.sonatype.org/content/repositories/codehaus-snapshots/|g'
+  $HOME/.m2/settings.xml
+branches: ''
+cache:
+  directories:
+  - $HOME/.m2
 env:
   global:
   - DFB_PROJECT_DIR=$(pwd)
@@ -45,12 +50,17 @@ env:
   - DFB_PACKAGING_URL=s3://${DFB_AWS_BUCKET}/artifacts/travis/
   - DFB_AWS_BUILD_PATH=/artifacts/travis/${DFB_PRODUCT_KEY}/${DFB_BUILD_ID}/output/
   - ARTIFACTS_MAX_SIZE=4048576000
-
 jdk:
 - oraclejdk8
 language: java
-
+notifications:
+  webhooks:
+    on_failure: always
+    on_start: always
+    on_success: always
+    urls:
+    - http://insights-portal-insights-service-webserver-stg.public-swarm.devfactory.com/travisWebHookListener?build_id=98ce86fe-07e4-42ad-99f9-14f93a2e56ce
 script:
 - travis_wait 30 mvn -DskipTests=true -Dmaven.javadoc.skip=true -Drat.skip=true -Drat.ignoreErrors=true
   test-compile -Dgpg.skip=true
-# Modified by me!!!!!11
+# Modified by Insights Service at 2016-10-11 20:36:47.828408
